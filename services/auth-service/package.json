@@ -1,0 +1,30 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "description": "Serviço de autenticação e criação do usuario no sistema",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec tsx src/index.ts"
+  },
+  "author": "Diego Melo",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/redis": "^4.0.11",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.6.1",
+    "redis": "^5.12.1"
+  }
+}
