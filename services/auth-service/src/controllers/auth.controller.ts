@@ -1,4 +1,4 @@
-import * as authService from "../services/auth.service.js";
+import * as authService from "../src/services/auth.service.js";
 
 export const register = async (user: {
   email: string;

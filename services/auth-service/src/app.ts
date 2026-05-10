@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { authRoute } from "../routes/auth.routes.js";
-import { connectMongo } from "../config/database.js";
+import { connectMongo } from "./config/database.js";
 
 dotenv.config();
 const PORT = Number(process.env.PORT);

@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import * as userRepository from "../repositories/user.repository.js";
+import * as userRepository from "../../repositories/user.repository.js";
 import { createToken } from "../middlewares/auth.middleware.js";
 import dotenv from "dotenv";
 
