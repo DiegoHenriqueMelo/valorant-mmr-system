@@ -1,4 +1,7 @@
 import { User } from "../models/user.model.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("auth.repository");
 
 export const insert = async (
   email: string,
@@ -7,6 +10,7 @@ export const insert = async (
   lastLogin: Date,
 ): Promise<[number, string]> => {
   try {
+    logger.info("REPOSITORY STARTED");
     const insertUser = await User.create({
       email,
       passwordHash: passHash,
@@ -15,8 +19,8 @@ export const insert = async (
     });
     return [201, "Criado com sucesso"];
   } catch (e) {
+    logger.error("REPOSITORY ERROR");
     const error: string = String(e);
-    console.log(error);
     const codErr: string = String(error.split(" ")[1]);
     if (codErr === "E11000")
       return [
@@ -28,16 +32,22 @@ export const insert = async (
     } else {
       return [500, "Erro interno do servidor!"];
     }
+  } finally {
+    logger.info("REPOSITORY COMPLETED");
   }
 };
 
 export const findByEmail = async (email: string): Promise<any> => {
   try {
+    logger.info("REPOSITORY STARTED");
     const getUser = await User.findOne({ email });
     if (!getUser) throw new Error("Credenciais Inválidas");
     return [200, getUser];
   } catch (e) {
-    console.log(e);
+    logger.error("REPOSITORY ERROR");
+    logger.debug(`status: 500, message: ${String(e)}`);
     return [500, String(e)];
+  } finally {
+    logger.info("REPOSITORY COMPLETED");
   }
 };

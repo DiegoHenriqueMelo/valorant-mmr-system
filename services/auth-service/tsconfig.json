@@ -13,7 +13,7 @@
     "sourceMap": true,
     "declaration": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/server/server.ts"],
   "exclude": ["node_modules", "dist", "coverage"],
   "ts-node": {
     "esm": true

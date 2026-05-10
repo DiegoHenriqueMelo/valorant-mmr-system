@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { loggerEndpoint } from "../middlewares/loggerEndpoint.js";
 import * as authController from "../controllers/auth.controller.js";
 
 export const authRoute: Router = Router();
@@ -52,12 +53,16 @@ export const authRoute: Router = Router();
  *                  type: string
  *                  example: "Algum usuario ja tem esses dados cadastrados"
  */
-authRoute.post("/api/auth", async (req: Request, res: Response) => {
-  const body = req.body;
-  const result = await authController.register(body);
-  res.status(result[0]);
-  res.send({ statusCode: result[0], message: result[1] });
-});
+authRoute.post(
+  "/api/auth",
+  loggerEndpoint,
+  async (req: Request, res: Response) => {
+    const body = req.body;
+    const result = await authController.register(body);
+    res.status(result[0]);
+    res.send({ statusCode: result[0], message: result[1] });
+  },
+);
 
 /**
  * @openapi
@@ -108,8 +113,12 @@ authRoute.post("/api/auth", async (req: Request, res: Response) => {
  *                  type: string
  *                  example: "Credenciais inválidas"
  */
-authRoute.post("/api/auth/login", async (req: Request, res: Response) => {
-  const body = req.body;
-  const result = await authController.login(body);
-  res.status(result[0]).json({ statusCode: result[0], token: result[1] });
-});
+authRoute.post(
+  "/api/auth/login",
+  loggerEndpoint,
+  async (req: Request, res: Response) => {
+    const body = req.body;
+    const result = await authController.login(body);
+    res.status(result[0]).json({ statusCode: result[0], token: result[1] });
+  },
+);
