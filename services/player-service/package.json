@@ -4,7 +4,8 @@
   "description": "Serviço de gestão de player",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon --exec tsx src/app.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "author": "Diego Melo",
   "license": "ISC",
@@ -12,6 +13,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/winston": "^2.4.4",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
@@ -30,6 +32,7 @@
     "mongoose": "^9.6.1",
     "redis": "^5.12.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0"
   }
 }
