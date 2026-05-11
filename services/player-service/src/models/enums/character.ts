@@ -1,5 +1,5 @@
 export enum Character{
-    Astre,
+    Astra,
     Breach,
     Brimstone,
     Chamber,
