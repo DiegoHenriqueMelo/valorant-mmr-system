@@ -4,7 +4,8 @@
   "description": "Serviço de gestão de player",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec tsx src/app.ts"
+    "dev": "nodemon --exec tsx src/app.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "author": "Diego Melo",
   "license": "ISC",
