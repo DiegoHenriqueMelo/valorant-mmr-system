@@ -12,7 +12,7 @@ const logger = createLogger("server");
 export const startServer = async () => {
   dotenv.config();
   await connectMongo();
-  const PORT = Number(process.env.PORT);
+  const PORT = Number(process.env.AUTH_PORT);
   const app = express();
   const corsOptions = {
     origin: "*",

@@ -8,7 +8,7 @@ const logger = createLogger("mongoose");
 export const connectMongo = async (): Promise<string> => {
   try {
     logger.info("CONNECTING TO THE MONGOOSE");
-    const uri: string = String(process.env.MONGO_URI);
+    const uri: string = String(process.env.AUTH_MONGO_URI);
     const mongo = mongoose;
     const result = await mongo.connect(uri);
 

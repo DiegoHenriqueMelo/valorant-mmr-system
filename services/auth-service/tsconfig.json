@@ -13,7 +13,7 @@
     "sourceMap": true,
     "declaration": true
   },
-  "include": ["src/**/*", "src/server/server.ts"],
+  "include": ["src/**/*", "src/server/server.ts", "../player-service/src/utils/logger.ts", "../player-service/src/config/database.ts", "../player-service/src/middlewares/loggerEndpoint.ts"],
   "exclude": ["node_modules", "dist", "coverage"],
   "ts-node": {
     "esm": true
