@@ -11,7 +11,7 @@ export const createToken = async (
   try {
     logger.info("CREATE TOKEN STARTED");
     const secret: string = String(process.env.JWT_SECRET);
-    const token: string = JWT.sign({ idUSer: id, roleUser: role }, secret, {
+    const token: string = JWT.sign({ idUser: id, roleUser: role }, secret, {
       expiresIn: ex,
     });
     return token;
