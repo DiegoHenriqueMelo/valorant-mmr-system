@@ -1,0 +1,6 @@
+{
+  "watch": ["src", "routes", "controllers", "services", "repositories", "middlewares", "models"],
+  "ext": "ts",
+  "ignore": ["dist"],
+  "exec": "tsx src/app.ts"
+}
