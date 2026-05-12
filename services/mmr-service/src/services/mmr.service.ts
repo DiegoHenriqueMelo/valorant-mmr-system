@@ -48,42 +48,23 @@ export const register = async (mmr: {
   }
 };
 
-// export const login = async (user: {
-//   email: string;
-//   password: string;
-// }): Promise<[number, string]> => {
-//   try {
-//     logger.info("SERVICE STARTED");
-//     dotenv.config();
+export const getAll = async (): Promise<[number, any]> => {
+  try {
+    logger.info("SERVICE STARTED");
+    const [status, getUser] = await mmrRepository.getAll();
 
-//     const EX: number = Number(process.env.JWT_EXPIRES_IN);
+    if (status !== 200) throw new Error(getUser);
 
-//     const [status, getUser] = await userRepository.findByEmail(user.email);
+    const result = [];
 
-//     if (status !== 200) throw new Error(getUser);
+    getUser.forEach((player) => {
+      const user = [player.email, player.mmr];
+      result.push(user);
+    });
 
-//     logger.debug("VALIDATING PASSWORD");
-//     const passIsValid = await bcrypt.compare(
-//       user.password,
-//       getUser.passwordHash,
-//     );
-
-//     if (!passIsValid) {
-//       logger.debug("FAILED TO VALIDATING PASSWORD");
-//       throw new Error("Credenciais inválidas");
-//     }
-
-//     logger.info("GENERATING TOKEN");
-//     const token = await createToken("player", getUser.email, EX);
-
-//     if (token === 500) {
-//       logger.debug("FAILED TO GENERATING TOKEN");
-//       throw new Error("Não foi possivel criar token");
-//     }
-
-//     return [200, `Token: ${token}`];
-//   } catch (e) {
-//     return [500, String(e)];
-//   } finally {
-//   }
-// };
+    return [200, result];
+  } catch (e) {
+    return [500, String(e)];
+  } finally {
+  }
+};
