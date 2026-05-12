@@ -68,7 +68,7 @@ export const login = async (user: {
       throw new Error("Não foi possivel criar token");
     }
 
-    return [200, `Token: ${token}`];
+    return [200, String(token)];
   } catch (e) {
     return [500, String(e)];
   } finally {

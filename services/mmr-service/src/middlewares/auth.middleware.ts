@@ -1,10 +1,8 @@
 import JWT from "jsonwebtoken";
-import dotenv from "dotenv";
-import { Request, Response, NextFunction } from "express";
 import { createLogger } from "../utils/logger.js";
-dotenv.config();
+import { Request, Response, NextFunction } from "express";
 
-const logger = createLogger("auth token");
+const logger = createLogger("middleware JWT");
 
 interface TokenPayload {
   idUser: string;
@@ -13,6 +11,27 @@ interface TokenPayload {
   exp: number;
 }
 
+export const createToken = async (
+  role: string,
+  id: string,
+  ex: number,
+): Promise<string | number> => {
+  try {
+    logger.info("CREATE TOKEN STARTED");
+    const secret: string = String(process.env.JWT_SECRET);
+    const token: string = JWT.sign({ idUser: id, roleUser: role }, secret, {
+      expiresIn: ex,
+    });
+    return token;
+  } catch (e) {
+    logger.error("CREATE TOKEN ERROR");
+    logger.debug(`status: 500, message: ${String(e)}`);
+    return 500;
+  } finally {
+    logger.info("CREATE TOKEN COMPLETED");
+  }
+};
+
 export const tokenIsValid = async (
   req: Request,
   res: Response,
@@ -20,14 +39,14 @@ export const tokenIsValid = async (
 ) => {
   try {
     logger.info("AUTH TOKEN STARTED");
-    
+
     const authHeader = req.headers["authorization"];
 
     if (!authHeader) {
       logger.warn("Token não fornecido no header Autorization");
-      res.status(400).json({
+      res.status(401).json({
         statusCode: 401,
-        message: "Token não forneciso",
+        message: "Token não fornecido",
       });
       return;
     }
@@ -71,8 +90,9 @@ export const tokenIsValid = async (
     }
 
     logger.info(`Autenticação bem-sucedida - User Email: ${decoded.idUser}`);
-    (req as any).user = {
+    (req as any).mmr = {
       email: decoded.idUser,
+      token: token,
     };
 
     next();
@@ -103,26 +123,5 @@ export const tokenIsValid = async (
       messageSistem: "Erro interno na autenticação",
       body: null,
     });
-  }
-};
-
-export const createToken = async (
-  role: string,
-  id: string,
-  ex: number,
-): Promise<string | number> => {
-  try {
-    logger.info("CREATE TOKEN STARTED");
-    const secret: string = String(process.env.JWT_SECRET);
-    const token: string = JWT.sign({ idUser: id, roleUser: role }, secret, {
-      expiresIn: ex,
-    });
-    return token;
-  } catch (e) {
-    logger.error("CREATE TOKEN ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
-    return 500;
-  } finally {
-    logger.info("CREATE TOKEN COMPLETED");
   }
 };

@@ -46,3 +46,17 @@ export const create = async (
     logger.info("REPOSITORY COMPLETED");
   }
 };
+export const getPlayer = async (email: string): Promise<[number, any]> => {
+  try {
+    logger.info("REPOSITORY STARTED");
+    const getPlayer = await Player.findOne({ email });
+    if (!getPlayer) throw new Error("Credenciais Inválidas");
+    return [200, getPlayer];
+  } catch (e) {
+    logger.error("REPOSITORY ERROR");
+    logger.debug(`status: 500, message: ${String(e)}`);
+    return [500, String(e)];
+  } finally {
+    logger.info("REPOSITORY COMPLETED");
+  }
+};
