@@ -78,61 +78,47 @@ mmrRoute.post(
   },
 );
 
-// /**
-//  * @openapi
-//  * /api/auth/login:
-//  *  post:
-//  *    summary: login no sistema
-//  *    description: login no sistema
-//  *    tags:
-//  *      - Auth
-//  *    requestBody:
-//  *      required: true
-//  *      content:
-//  *        application/json:
-//  *          schema:
-//  *            type: object
-//  *            properties:
-//  *              email:
-//  *                type: string
-//  *                example: "example@email.com"
-//  *              password:
-//  *                type: string
-//  *                example: "12345"
-//  *    responses:
-//  *      200:
-//  *        description: "Login realizado"
-//  *        content:
-//  *          application/json:
-//  *            schema:
-//  *              type: object
-//  *              properties:
-//  *                statusCode:
-//  *                  type: number
-//  *                  example: 200
-//  *                token:
-//  *                  type: string
-//  *                  example: "Login Realizado"
-//  *      400:
-//  *        description: "Credenciais inválidas"
-//  *        content:
-//  *          application/json:
-//  *            schema:
-//  *              type: object
-//  *              properties:
-//  *                statusCode:
-//  *                  type: number
-//  *                  example: 400
-//  *                message:
-//  *                  type: string
-//  *                  example: "Credenciais inválidas"
-//  */
-// authRoute.post(
-//   "/api/auth/login",
-//   loggerEndpoint,
-//   async (req: Request, res: Response) => {
-//     const body = req.body;
-//     const result = await authController.login(body);
-//     res.status(result[0]).json({ statusCode: result[0], token: result[1] });
-//   },
-// );
+/**
+ * @openapi
+ * /api/mmr:
+ *  get:
+ *    summary: Resgata todos os mmr's
+ *    description: Resgata todos os mmr's
+ *    tags:
+ *      - MMR
+ *    responses:
+ *      200:
+ *        description: "Dados resgatados"
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                statusCode:
+ *                  type: number
+ *                  example: 200
+ *                token:
+ *                  type: string
+ *                  example: "Dados resgatados"
+ *      400:
+ *        description: "Dados não encontrados"
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                statusCode:
+ *                  type: number
+ *                  example: 400
+ *                message:
+ *                  type: string
+ *                  example: "Dados não encontrados"
+ */
+mmrRoute.get(
+  "/api/mmr",
+  loggerEndpoint,
+  async (req: Request, res: Response) => {
+    const result = await mmrController.getAll();
+    res.status(result[0]).json({ statusCode: result[0], mmrs: result[1] });
+  },
+);
