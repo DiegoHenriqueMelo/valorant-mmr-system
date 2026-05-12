@@ -12,7 +12,7 @@ export const playerRoute: Router = Router();
  *    summary: Cria um novo jogador
  *    description: Cria um jogador
  *    tags:
- *      - Auth
+ *      - Player
  *    security:
  *      - BearerAuth: []
  *    requestBody:
@@ -74,61 +74,66 @@ playerRoute.post(
   },
 );
 
-// /**
-//  * @openapi
-//  * /api/auth/login:
-//  *  post:
-//  *    summary: login no sistema
-//  *    description: login no sistema
-//  *    tags:
-//  *      - Auth
-//  *    requestBody:
-//  *      required: true
-//  *      content:
-//  *        application/json:
-//  *          schema:
-//  *            type: object
-//  *            properties:
-//  *              email:
-//  *                type: string
-//  *                example: "example@email.com"
-//  *              password:
-//  *                type: string
-//  *                example: "12345"
-//  *    responses:
-//  *      200:
-//  *        description: "Login realizado"
-//  *        content:
-//  *          application/json:
-//  *            schema:
-//  *              type: object
-//  *              properties:
-//  *                statusCode:
-//  *                  type: number
-//  *                  example: 200
-//  *                token:
-//  *                  type: string
-//  *                  example: "Login Realizado"
-//  *      400:
-//  *        description: "Credenciais inválidas"
-//  *        content:
-//  *          application/json:
-//  *            schema:
-//  *              type: object
-//  *              properties:
-//  *                statusCode:
-//  *                  type: number
-//  *                  example: 400
-//  *                message:
-//  *                  type: string
-//  *                  example: "Credenciais inválidas"
-//  */
-// authRoute.post(
-//   "/api/auth/login",
-//   loggerEndpoint,
-//   async (req: Request, res: Response) => {
-//     const body = req.body;
-//     const result = await authController.login(body);
-//     res.status(result[0]).json({ statusCode: result[0], token: result[1] });
-//   },
-// );
+/**
+ * @openapi
+ * /api/player/me:
+ *  get:
+ *    summary: resgata informações sobre o player
+ *    description: resgata informações sobre o player
+ *    tags:
+ *      - Player
+ *    security:
+ *      - BearerAuth: []
+ *    responses:
+ *      200:
+ *        description: "Player encontrado"
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                statusCode:
+ *                  type: number
+ *                  example: 200
+ *                token:
+ *                  type: object
+ *                  properties:
+ *                    email:
+ *                      type: string
+ *                      example: "example@email.com"
+ *                    nickname:
+ *                      type: string
+ *                      example: "Jogador1"
+ *                    rank:
+ *                      type: number
+ *                      example: 200
+ *                    agenteFavorito:
+ *                      type: string
+ *                      example: "Agente1"
+ *                    ragiao:
+ *                      type: string
+ *                      example: "Regiao1"
+ *      400:
+ *        description: "Credenciais inválidas"
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                statusCode:
+ *                  type: number
+ *                  example: 400
+ *                message:
+ *                  type: string
+ *                  example: "Credenciais inválidas"
+ */
+playerRoute.get(
+  "/api/player/me",
+  loggerEndpoint,
+  tokenIsValid,
+  async (req: Request, res: Response) => {
+    const body = { ...req.body, email: (req as any).user?.email };
+    const result = await playerController.getPlayer(body);
+    res.status(result[0]).json({ statusCode: result[0], player: result[1] });
+  },
+);

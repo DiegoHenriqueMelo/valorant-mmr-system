@@ -20,7 +20,7 @@ export const tokenIsValid = async (
 ) => {
   try {
     logger.info("AUTH TOKEN STARTED");
-
+    
     const authHeader = req.headers["authorization"];
 
     if (!authHeader) {
@@ -103,5 +103,26 @@ export const tokenIsValid = async (
       messageSistem: "Erro interno na autenticação",
       body: null,
     });
+  }
+};
+
+export const createToken = async (
+  role: string,
+  id: string,
+  ex: number,
+): Promise<string | number> => {
+  try {
+    logger.info("CREATE TOKEN STARTED");
+    const secret: string = String(process.env.JWT_SECRET);
+    const token: string = JWT.sign({ idUser: id, roleUser: role }, secret, {
+      expiresIn: ex,
+    });
+    return token;
+  } catch (e) {
+    logger.error("CREATE TOKEN ERROR");
+    logger.debug(`status: 500, message: ${String(e)}`);
+    return 500;
+  } finally {
+    logger.info("CREATE TOKEN COMPLETED");
   }
 };

@@ -37,12 +37,41 @@ export const create = async (player: {
       player.regiao,
       player.email,
     );
-    return[createPlayer[0], createPlayer[1]]
+    return [createPlayer[0], createPlayer[1]];
   } catch (e) {
     logger.error("SERVICE ERROR");
     logger.debug(`status: 500, message: ${String(e)}`);
     return [500, String(e)];
   } finally {
     logger.info("SERVICE COMPLETED");
+  }
+};
+
+export const login = async (email: string): Promise<[number, any]> => {
+  try {
+    logger.info("SERVICE STARTED");
+
+    const [status, getPlayer] = await playerRepository.getPlayer(email);
+
+    if (status !== 200) throw new Error(getPlayer);
+
+    const rankScore: number = Number(
+      Rank[getPlayer.rank] * 100,
+    );
+    logger.debug(`RANK: ${getPlayer.rank}`);
+    logger.debug(`RANK SCORE DEFAULT: ${Rank[getPlayer.rank]}`);
+    logger.debug(`RANK SCORE: ${rankScore}`);
+    const bodyFormatted = {
+      email: getPlayer.email,
+      nickname: getPlayer.nickname,
+      rank: rankScore,
+      agenteFavorito: getPlayer.agenteFavorito,
+      regiao: getPlayer.regiao,
+    };
+
+    return [200, bodyFormatted];
+  } catch (e) {
+    return [500, String(e)];
+  } finally {
   }
 };
