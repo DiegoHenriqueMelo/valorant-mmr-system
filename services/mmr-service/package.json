@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon --exec tsx src/app.ts"
   },
   "author": "Diego Melo",
   "license": "ISC",
@@ -20,7 +20,8 @@
     "mongoose": "^9.6.2",
     "redis": "^5.12.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
