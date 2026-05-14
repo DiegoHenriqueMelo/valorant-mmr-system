@@ -58,8 +58,7 @@ export const getAll = async (): Promise<[number, any]> => {
     const result = [];
 
     getUser.forEach((player) => {
-      const user = [player.email, player.mmr];
-      result.push(user);
+      result.push({ email: player.email, mmr: player.mmr });
     });
 
     return [200, result];
