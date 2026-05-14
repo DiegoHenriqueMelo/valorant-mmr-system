@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createLogger } from "../../../auth-service/src/utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("LoggerEndpoint")
 
