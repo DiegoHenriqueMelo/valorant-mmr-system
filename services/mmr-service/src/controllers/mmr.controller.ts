@@ -1,7 +1,7 @@
 import * as mmrService from "../services/mmr.service.js";
 import { createLogger } from "../utils/logger.js";
 
-const logger = createLogger("auth.controller");
+const logger = createLogger("mmr.controller");
 
 export const register = async (mmr: {
   email: string;
@@ -16,28 +16,32 @@ export const register = async (mmr: {
   token: string;
 }): Promise<[number, string]> => {
   try {
-    logger.info("CONTROLLER STARTED");
+    logger.info("Initiating MMR registration", { matchHistoryCount: mmr.historico.length });
     const result = await mmrService.register(mmr);
+    if (result[0] === 201) {
+      logger.info("MMR registration completed successfully");
+    } else {
+      logger.warn("MMR registration rejected", { statusCode: result[0] });
+    }
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during MMR registration", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("CONTROLLER COMPLETED");
   }
 };
 
 export const getAll = async (): Promise<[number, any]> => {
   try {
-    logger.info("CONTROLLER STARTED");
+    logger.info("Initiating MMR leaderboard retrieval");
     const result = await mmrService.getAll();
+    if (result[0] === 200) {
+      logger.info("MMR leaderboard retrieved successfully", { count: Array.isArray(result[1]) ? result[1].length : 0 });
+    } else {
+      logger.warn("MMR leaderboard retrieval failed", { statusCode: result[0] });
+    }
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during MMR leaderboard retrieval", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("CONTROLLER COMPLETED");
   }
 };

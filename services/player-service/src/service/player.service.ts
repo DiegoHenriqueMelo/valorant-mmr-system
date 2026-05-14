@@ -3,7 +3,7 @@ import { Rank } from "../models/enums/rank.js";
 import { createLogger } from "../utils/logger.js";
 import * as playerRepository from "../repositories/player.repository.js";
 
-const logger = createLogger("player.services");
+const logger = createLogger("player.service");
 
 export const create = async (player: {
   nickname: string;
@@ -13,22 +13,23 @@ export const create = async (player: {
   email: string;
 }): Promise<[number, string]> => {
   try {
-    logger.info("SERVICE STARTED");
+    logger.info("Starting player profile creation flow");
     const allRanks = Object.values(Rank);
-    const allCharacter = Object.values(Character);
-    const realRank: string = String(allRanks[player.rank]);
-    const realCharacter: string = String(allCharacter[player.agenteFavorito]);
+    const allCharacters = Object.values(Character);
 
-    if (player.rank < 0 || player.rank > allRanks.length)
+    if (player.rank < 0 || player.rank >= allRanks.length) {
+      logger.warn("Player creation rejected -- invalid rank index provided", { rankIndex: player.rank, maxIndex: allRanks.length - 1 });
       throw new Error("Rank não existente");
-    if (
-      player.agenteFavorito < 0 ||
-      player.agenteFavorito > allCharacter.length
-    )
+    }
+    if (player.agenteFavorito < 0 || player.agenteFavorito >= allCharacters.length) {
+      logger.warn("Player creation rejected -- invalid agent index provided", { agentIndex: player.agenteFavorito, maxIndex: allCharacters.length - 1 });
       throw new Error("Agente não existente");
+    }
 
-    logger.info(`RANK: ${realRank}`);
-    logger.info(`CHARACTER: ${realCharacter}`);
+    const realRank: string = String(allRanks[player.rank]);
+    const realCharacter: string = String(allCharacters[player.agenteFavorito]);
+
+    logger.debug("Player data resolved", { rank: realRank, agent: realCharacter, region: player.regiao });
 
     const createPlayer = await playerRepository.create(
       player.nickname,
@@ -37,30 +38,32 @@ export const create = async (player: {
       player.regiao,
       player.email,
     );
+
+    if (createPlayer[0] === 201) {
+      logger.info("Player profile persisted successfully");
+    }
+
     return [createPlayer[0], createPlayer[1]];
   } catch (e) {
-    logger.error("SERVICE ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Player profile creation failed", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("SERVICE COMPLETED");
   }
 };
 
 export const login = async (email: string): Promise<[number, any]> => {
   try {
-    logger.info("SERVICE STARTED");
+    logger.info("Fetching player profile for authentication context");
 
     const [status, getPlayer] = await playerRepository.getPlayer(email);
 
-    if (status !== 200) throw new Error(getPlayer);
+    if (status !== 200) {
+      logger.warn("Player profile not found", { statusCode: status });
+      throw new Error(getPlayer);
+    }
 
-    const rankScore: number = Number(
-      Rank[getPlayer.rank] * 100,
-    );
-    logger.debug(`RANK: ${getPlayer.rank}`);
-    logger.debug(`RANK SCORE DEFAULT: ${Rank[getPlayer.rank]}`);
-    logger.debug(`RANK SCORE: ${rankScore}`);
+    const rankScore: number = Number(Rank[getPlayer.rank] * 100);
+    logger.debug("Rank score computed", { rank: getPlayer.rank, rankScore });
+
     const bodyFormatted = {
       email: getPlayer.email,
       nickname: getPlayer.nickname,
@@ -69,9 +72,10 @@ export const login = async (email: string): Promise<[number, any]> => {
       regiao: getPlayer.regiao,
     };
 
+    logger.info("Player profile retrieved and formatted successfully");
     return [200, bodyFormatted];
   } catch (e) {
+    logger.error("Player profile retrieval failed", { error: String(e) });
     return [500, String(e)];
-  } finally {
   }
 };

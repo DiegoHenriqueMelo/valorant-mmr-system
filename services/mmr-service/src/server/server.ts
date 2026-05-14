@@ -54,8 +54,11 @@ export const startServer = async () => {
     }),
   );
   app.use(mmrRoute);
-  app.listen(Number(PORT), async () => {
-    logger.info(`Servidor iniciado na porta: http://localhost:${PORT}`);
-    logger.info(`SWAGGER iniciado na porta: http://localhost:${PORT}/api-docs`);
+  app.listen(PORT, () => {
+    logger.info("------------------------------------------------------");
+    logger.info(`  MMR Service started successfully`);
+    logger.info(`  API listening at  http://localhost:${PORT}`);
+    logger.info(`  Swagger UI at     http://localhost:${PORT}/api-docs`);
+    logger.info("------------------------------------------------------");
   });
 };

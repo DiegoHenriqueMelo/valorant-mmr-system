@@ -16,43 +16,35 @@ export const create = async (
   mmr: number,
 ): Promise<[number, string]> => {
   try {
-    const insertMMR = await MMR.create({
-      email,
-      historico,
-      mmr,
-    });
-    logger.debug(`INSSERT MMR: ${JSON.stringify(insertMMR, null, 2)}`);
+    logger.info("Inserting MMR record into the database", { mmrScore: mmr, matchCount: historico.length });
+    await MMR.create({ email, historico, mmr });
+    logger.info("MMR record created successfully");
     return [201, "Criado com sucesso"];
   } catch (e) {
-    logger.error("REPOSITORY ERROR");
-    logger.error(`ERROR: ${String(e)}`);
     const error: string = String(e);
     const codErr: string = String(error.split(" ")[1]);
-    if (codErr === "E11000")
-      return [
-        400,
-        `Erro: ${codErr}, Algúm usuraio já tem esses dados cadastrados`,
-      ];
-    if (codErr !== "E11000") {
-      return [400, "Dados inválidos, revise os dados"];
-    } else {
-      return [500, "Erro interno do servidor!"];
+    if (codErr === "E11000") {
+      logger.warn("Duplicate MMR entry detected -- record already exists for this user", { errorCode: codErr });
+      return [400, `Erro: ${codErr}, Algúm usuraio já tem esses dados cadastrados`];
     }
+    logger.error("Database write failed during MMR insertion", { error });
+    return [400, "Dados inválidos, revise os dados"];
   } finally {
-    logger.info("REPOSITORY COMPLETED");
+    logger.debug("MMR insert operation finished");
   }
 };
+
 export const getAll = async (): Promise<[number, any]> => {
   try {
-    logger.info("REPOSITORY STARTED");
+    logger.info("Querying all MMR records from the database");
     const getPlayer = await MMR.find();
     if (!getPlayer) throw new Error("Credenciais Inválidas");
+    logger.debug(`MMR records retrieved`, { count: getPlayer.length });
     return [200, getPlayer];
   } catch (e) {
-    logger.error("REPOSITORY ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Database query failed during MMR retrieval", { error: String(e) });
     return [500, String(e)];
   } finally {
-    logger.info("REPOSITORY COMPLETED");
+    logger.debug("MMR getAll operation finished");
   }
 };

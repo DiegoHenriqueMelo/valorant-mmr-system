@@ -10,44 +10,43 @@ export const insert = async (
   lastLogin: Date,
 ): Promise<[number, string]> => {
   try {
-    logger.info("REPOSITORY STARTED");
-    const insertUser = await User.create({
+    logger.info("Inserting new user record into the database");
+    await User.create({
       email,
       passwordHash: passHash,
-      createdAt: createdAt,
-      lastLogin: lastLogin,
+      createdAt,
+      lastLogin,
     });
+    logger.info("User record created successfully");
     return [201, "Criado com sucesso"];
   } catch (e) {
-    logger.error("REPOSITORY ERROR");
     const error: string = String(e);
     const codErr: string = String(error.split(" ")[1]);
-    if (codErr === "E11000")
-      return [
-        400,
-        `Erro: ${codErr}, Algúm usuraio já tem esses dados cadastrados`,
-      ];
-    if (codErr !== "E11000") {
-      return [400, "Dados inválidos, revise os dados"];
-    } else {
-      return [500, "Erro interno do servidor!"];
+    if (codErr === "E11000") {
+      logger.warn("Duplicate entry detected -- user already exists", { errorCode: codErr });
+      return [400, `Erro: ${codErr}, Algúm usuraio já tem esses dados cadastrados`];
     }
+    logger.error("Database write failed during user insertion", { error });
+    return [400, "Dados inválidos, revise os dados"];
   } finally {
-    logger.info("REPOSITORY COMPLETED");
+    logger.debug("User insert operation finished");
   }
 };
 
 export const findByEmail = async (email: string): Promise<any> => {
   try {
-    logger.info("REPOSITORY STARTED");
+    logger.info("Querying user record by email identifier");
     const getUser = await User.findOne({ email });
-    if (!getUser) throw new Error("Credenciais Inválidas");
+    if (!getUser) {
+      logger.warn("No user found for the provided email identifier");
+      throw new Error("Credenciais Inválidas");
+    }
+    logger.debug("User record retrieved successfully");
     return [200, getUser];
   } catch (e) {
-    logger.error("REPOSITORY ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Database query failed during user lookup", { error: String(e) });
     return [500, String(e)];
   } finally {
-    logger.info("REPOSITORY COMPLETED");
+    logger.debug("User lookup operation finished");
   }
 };

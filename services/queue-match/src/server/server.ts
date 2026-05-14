@@ -60,7 +60,10 @@ export const startServer = async () => {
   );
 
   app.listen(PORT, () => {
-    logger.info(`Servidor iniciado na porta: http://localhost:${PORT}`);
-    logger.info(`SWAGGER iniciado na porta: http://localhost:${PORT}/api-docs`);
+    logger.info("------------------------------------------------------");
+    logger.info(`  Queue Match Service started successfully`);
+    logger.info(`  API listening at  http://localhost:${PORT}`);
+    logger.info(`  Swagger UI at     http://localhost:${PORT}/api-docs`);
+    logger.info("------------------------------------------------------");
   });
 };

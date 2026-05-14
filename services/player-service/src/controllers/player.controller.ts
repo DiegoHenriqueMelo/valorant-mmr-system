@@ -11,30 +11,32 @@ export const create = async (player: {
   email: string;
 }): Promise<[number, string]> => {
   try {
-    logger.info("CONTROLLER STARTED");
-    logger.debug(`REQ BODY: ${JSON.stringify(player, null, 2)}`);
+    logger.info("Initiating player profile creation", { region: player.regiao });
     const result = await playerService.create(player);
+    if (result[0] === 201) {
+      logger.info("Player profile created successfully");
+    } else {
+      logger.warn("Player profile creation rejected", { statusCode: result[0] });
+    }
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during player profile creation", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("CONTROLLER COMPLETED");
   }
 };
 
 export const getPlayer = async (player: { email: string }): Promise<[number, any]> => {
   try {
-    logger.info("CONTROLLER STARTED");
-    logger.debug(`EMAIL: ${player.email}`);
+    logger.info("Initiating player profile retrieval");
     const result = await playerService.login(player.email);
+    if (result[0] === 200) {
+      logger.info("Player profile retrieved successfully");
+    } else {
+      logger.warn("Player profile retrieval failed", { statusCode: result[0] });
+    }
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during player profile retrieval", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("CONTROLLER COMPLETED");
   }
 };

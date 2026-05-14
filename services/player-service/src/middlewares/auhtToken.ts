@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import { createLogger } from "../utils/logger.js";
 dotenv.config();
 
-const logger = createLogger("auth token");
+const logger = createLogger("auth.middleware");
 
 interface TokenPayload {
   idUser: string;
@@ -19,90 +19,53 @@ export const tokenIsValid = async (
   next: NextFunction,
 ) => {
   try {
-    logger.info("AUTH TOKEN STARTED");
-    
+    logger.info("Validating incoming JWT token");
+
     const authHeader = req.headers["authorization"];
 
     if (!authHeader) {
-      logger.warn("Token não fornecido no header Autorization");
-      res.status(400).json({
-        statusCode: 401,
-        message: "Token não forneciso",
-      });
+      logger.warn("Request rejected -- Authorization header is missing");
+      res.status(400).json({ statusCode: 401, message: "Token não fornecido" });
       return;
     }
-    const parts = authHeader.split(" ");
 
+    const parts = authHeader.split(" ");
     if (parts.length !== 2 || parts[0] !== "Bearer") {
-      logger.warn("Formato do token inválido");
-      res.status(401).json({
-        statusCode: 401,
-        messageSistem: "Formato do token inválido. Use: Bearer <token>",
-      });
+      logger.warn("Request rejected -- Authorization header format is invalid (expected: Bearer <token>)");
+      res.status(401).json({ statusCode: 401, messageSistem: "Formato do token inválido. Use: Bearer <token>" });
       return;
     }
 
     const token = parts[1];
     const secret: string = String(process.env.JWT_SECRET);
 
-    logger.info("Validando token...");
-
     const decoded = (await JWT.verify(token, secret)) as TokenPayload;
-    const email = String(decoded.idUser);
 
-    if (!decoded) {
-      logger.warn("Não foi possivel decodificar");
-      res.status(401).json({
-        statusCode: 401,
-        messageSistem: "Não foi possivel decodificar",
-      });
+    if (!decoded || !decoded.idUser) {
+      logger.warn("Request rejected -- JWT payload is invalid or missing required claims");
+      res.status(401).json({ statusCode: 401, messageSistem: "Não foi possivel decodificar" });
       return;
     }
 
-    logger.debug(`DECODED: ${JSON.stringify(decoded, null, 2)}`);
-    logger.debug(`EMAIL: ${email}`);
-
-    if (!decoded.idUser == undefined) {
-      logger.warn("Não foi possivel decodificar");
-      res.status(401).json({
-        statusCode: 401,
-        messageSistem: "Não foi possivel decodificar",
-      });
-    }
-
-    logger.info(`Autenticação bem-sucedida - User Email: ${decoded.idUser}`);
-    (req as any).user = {
-      email: decoded.idUser,
-    };
+    logger.info("JWT token validated successfully", { role: decoded.roleUser });
+    (req as any).user = { email: decoded.idUser };
 
     next();
   } catch (error) {
     if (error instanceof JWT.TokenExpiredError) {
-      logger.error("Token expirado");
-      res.status(401).json({
-        statusCode: 401,
-        messageSistem: "Token expirado. Faça login novamente",
-        body: null,
-      });
+      logger.warn("Request rejected -- JWT token has expired");
+      res.status(401).json({ statusCode: 401, messageSistem: "Token expirado. Faça login novamente", body: null });
       return;
     }
 
     if (error instanceof JWT.JsonWebTokenError) {
-      logger.error("Token inválido");
-      res.status(401).json({
-        statusCode: 401,
-        messageSistem: "Token inválido",
-        body: null,
-      });
+      logger.warn("Request rejected -- JWT token signature is invalid");
+      res.status(401).json({ statusCode: 401, messageSistem: "Token inválido", body: null });
       return;
     }
 
-    logger.error("Erro na validação do token:", error);
-    res.status(500).json({
-      statusCode: 500,
-      messageSistem: "Erro interno na autenticação",
-      body: null,
-    });
+    logger.error("Unexpected error during token validation", { error: String(error) });
+    res.status(500).json({ statusCode: 500, messageSistem: "Erro interno na autenticação", body: null });
   }
 };
 
@@ -112,17 +75,15 @@ export const createToken = async (
   ex: number,
 ): Promise<string | number> => {
   try {
-    logger.info("CREATE TOKEN STARTED");
+    logger.debug(`Generating JWT token -- role: ${role}, expiresIn: ${ex}s`);
     const secret: string = String(process.env.JWT_SECRET);
     const token: string = JWT.sign({ idUser: id, roleUser: role }, secret, {
       expiresIn: ex,
     });
+    logger.debug("JWT token generated successfully");
     return token;
   } catch (e) {
-    logger.error("CREATE TOKEN ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("JWT token generation failed", { error: String(e) });
     return 500;
-  } finally {
-    logger.info("CREATE TOKEN COMPLETED");
   }
 };

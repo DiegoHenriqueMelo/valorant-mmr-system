@@ -1,7 +1,7 @@
 import JWT from "jsonwebtoken";
 import { createLogger } from "../utils/logger";
 
-const logger = createLogger("middleware JWT");
+const logger = createLogger("auth.middleware");
 
 export const createToken = async (
   role: string,
@@ -9,17 +9,15 @@ export const createToken = async (
   ex: number,
 ): Promise<string | number> => {
   try {
-    logger.info("CREATE TOKEN STARTED");
+    logger.debug(`Generating JWT token -- role: ${role}, expiresIn: ${ex}s`);
     const secret: string = String(process.env.JWT_SECRET);
     const token: string = JWT.sign({ idUser: id, roleUser: role }, secret, {
       expiresIn: ex,
     });
+    logger.debug("JWT token generated successfully");
     return token;
   } catch (e) {
-    logger.error("CREATE TOKEN ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("JWT token generation failed", { error: String(e) });
     return 500;
-  } finally {
-    logger.info("CREATE TOKEN COMPLETED");
   }
 };

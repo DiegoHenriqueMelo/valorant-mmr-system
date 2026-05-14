@@ -3,20 +3,18 @@ import dotenv from "dotenv";
 import { createLogger } from "../utils/logger.js";
 dotenv.config();
 
-const logger = createLogger("mongoose");
+const logger = createLogger("database");
 
 export const connectMongo = async (): Promise<string> => {
   try {
-    logger.info("CONNECTING TO THE MONGOOSE");
+    logger.info("Connecting to MongoDB...");
     const uri: string = String(process.env.QUEUE_MONGO_URI);
     const result = await mongoose.connect(uri);
-
-    if (result.connections[0].port) {
-      logger.info(`Mongo conectado na porta ${result.connections[0].port}`);
-    }
-    return "Conected";
+    const conn = result.connections[0];
+    logger.info(`MongoDB connected -- host: ${conn.host}, port: ${conn.port}, db: ${conn.name}`);
+    return "Connected";
   } catch (e) {
-    logger.error(e);
-    return "Não foi possivel conectar";
+    logger.error("MongoDB connection failed", { error: String(e) });
+    return "Connection failed";
   }
 };

@@ -8,15 +8,14 @@ export const register = async (user: {
   password: string;
 }): Promise<[number, string]> => {
   try {
-    logger.info("CONTROLLER STARTED");
+    logger.info("Initiating user registration");
     const result = await authService.register(user);
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during user registration", { error: String(e) });
     return [500, String(e)];
   } finally {
-    logger.info("CONTROLLER COMPLETED");
+    logger.debug("User registration handler finished");
   }
 };
 
@@ -25,14 +24,13 @@ export const login = async (user: {
   password: string;
 }): Promise<[number, string]> => {
   try {
-    logger.info("CONTROLLER STARTED");
+    logger.info("Initiating user authentication");
     const result = await authService.login(user);
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during user authentication", { error: String(e) });
     return [500, String(e)];
   } finally {
-    logger.info("CONTROLLER COMPLETED");
+    logger.debug("User authentication handler finished");
   }
 };

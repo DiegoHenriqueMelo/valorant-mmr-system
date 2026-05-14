@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { createLogger } from "../utils/logger.js";
 import { getRank } from "../lib/player-service/api.js";
 
-const logger = createLogger("auth.services");
+const logger = createLogger("mmr.service");
 
 export const register = async (mmr: {
   email: string;
@@ -19,51 +19,52 @@ export const register = async (mmr: {
   token: string;
 }): Promise<[number, string]> => {
   try {
-    logger.info("SERVICE STARTED");
+    logger.info("Starting MMR calculation", { matchCount: mmr.historico.length });
 
     let winRate: number = 0;
     let mmrFinal: number = 0;
 
+    logger.debug("Fetching player rank score from player-service");
     const score: number = await getRank(mmr.token);
+    logger.debug(`Player rank score retrieved`, { rankScore: score });
 
     mmr.historico.forEach((play) => {
-      play.result.toUpperCase() === "VITÓRIA" ? winRate++ : winRate--;
+      const isVictory = play.result.toUpperCase() === "VITÓRIA";
+      isVictory ? winRate++ : winRate--;
       mmrFinal = Number(Math.round(play.kill / play.death + score));
       play.score = mmrFinal;
     });
     mmrFinal = Number(Math.round((mmrFinal + winRate) / 3));
 
-    const result = await mmrRepository.create(
-      mmr.email,
-      mmr.historico,
-      mmrFinal,
-    );
+    logger.debug("MMR calculation completed", { winRate, mmrFinal });
+
+    const result = await mmrRepository.create(mmr.email, mmr.historico, mmrFinal);
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("SERVICE ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("MMR calculation or persistence failed", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("SERVICE COMPLETED");
   }
 };
 
 export const getAll = async (): Promise<[number, any]> => {
   try {
-    logger.info("SERVICE STARTED");
+    logger.info("Fetching all MMR records for leaderboard");
     const [status, getUser] = await mmrRepository.getAll();
 
-    if (status !== 200) throw new Error(getUser);
+    if (status !== 200) {
+      logger.warn("Repository returned an error status", { statusCode: status });
+      throw new Error(getUser);
+    }
 
     const result = [];
-
     getUser.forEach((player) => {
       result.push({ email: player.email, mmr: player.mmr });
     });
 
+    logger.info(`Leaderboard built successfully`, { totalPlayers: result.length });
     return [200, result];
   } catch (e) {
+    logger.error("Failed to retrieve MMR leaderboard", { error: String(e) });
     return [500, String(e)];
-  } finally {
   }
 };

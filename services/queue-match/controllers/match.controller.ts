@@ -5,28 +5,18 @@ const logger = createLogger("match.controller");
 
 export const match = async (): Promise<[number, string]> => {
   try {
-    logger.info("CONTROLLER STARTED");
+    logger.info("Match generation request received -- delegating to match service");
     const result = await matchService.match();
+    if (result[0] === 201) {
+      logger.info("Match generation completed successfully");
+    } else if (result[0] === 202) {
+      logger.info("Match generation deferred -- insufficient players in queue");
+    } else {
+      logger.warn("Match generation returned unexpected status", { statusCode: result[0] });
+    }
     return [result[0], result[1]];
   } catch (e) {
-    logger.error("CONTROLLER ERROR");
-    logger.debug(`status: 500, message: ${String(e)}`);
+    logger.error("Unexpected error during match generation", { error: String(e) });
     return [500, String(e)];
-  } finally {
-    logger.info("CONTROLLER COMPLETED");
   }
 };
-
-// export const getAll = async (): Promise<[number, any]> => {
-//   try {
-//     logger.info("CONTROLLER STARTED");
-//     const result = await mmrService.getAll();
-//     return [result[0], result[1]];
-//   } catch (e) {
-//     logger.error("CONTROLLER ERROR");
-//     logger.debug(`status: 500, message: ${String(e)}`);
-//     return [500, String(e)];
-//   } finally {
-//     logger.info("CONTROLLER COMPLETED");
-//   }
-// };
