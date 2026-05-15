@@ -29,15 +29,31 @@ export const startServer = async () => {
     definition: {
       openapi: "3.0.0",
       info: {
-        title: "Vava Match",
+        title: "MMR Service",
         version: "1.0.0",
+        description:
+          "Serviço de gerenciamento de MMR (Match Making Rating) do sistema Valorant MMR. " +
+          "Recebe o histórico de partidas dos jogadores, calcula o MMR com base em kills, mortes, " +
+          "resultado e rank atual, e fornece o leaderboard consumido pelo Queue Match Service " +
+          "para formação de partidas equilibradas.",
+        contact: {
+          name: "Suporte",
+          email: "diegohenriquemelo14@gmail.com",
+        },
       },
+      servers: [
+        {
+          url: `http://localhost:${process.env.MMR_PORT ?? 3003}`,
+          description: "Ambiente de desenvolvimento local",
+        },
+      ],
       components: {
         securitySchemes: {
           BearerAuth: {
             type: "http",
             scheme: "bearer",
             bearerFormat: "JWT",
+            description: "Token JWT obtido no Auth Service (`POST /api/auth/login`). Formato: `Bearer <token>`",
           },
         },
       },
@@ -50,7 +66,7 @@ export const startServer = async () => {
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
       customCss: ".swagger-ui .topbar { display: none }",
-      customSiteTitle: "Vava Macth - Documentação",
+      customSiteTitle: "MMR Service - Documentação",
     }),
   );
   app.use(mmrRoute);

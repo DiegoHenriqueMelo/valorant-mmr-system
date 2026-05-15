@@ -29,27 +29,44 @@ export const startServer = async () => {
     definition: {
       openapi: "3.0.0",
       info: {
-        title: "Vava Match",
+        title: "Player Service",
         version: "1.0.0",
+        description:
+          "Serviço de gerenciamento de perfis de jogadores do sistema Valorant MMR. " +
+          "Permite criar e consultar o perfil de um jogador (nickname, rank, agente favorito e região). " +
+          "O rank é convertido em um rankScore (índice × 100) utilizado pelo MMR Service " +
+          "no cálculo de pontuação das partidas.",
+        contact: {
+          name: "Suporte",
+          email: "diegohenriquemelo14@gmail.com",
+        },
       },
+      servers: [
+        {
+          url: `http://localhost:${process.env.PLAYER_PORT ?? 3002}`,
+          description: "Ambiente de desenvolvimento local",
+        },
+      ],
       components: {
         securitySchemes: {
           BearerAuth: {
             type: "http",
             scheme: "bearer",
             bearerFormat: "JWT",
+            description: "Token JWT obtido no Auth Service (`POST /api/auth/login`). Formato: `Bearer <token>`",
           },
         },
       },
     },
     apis: ["./src/routes/**/*.ts", "./routes/**/*.ts"],
   });
+  app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
   app.use(
     "/api-docs",
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
       customCss: ".swagger-ui .topbar { display: none }",
-      customSiteTitle: "Vava Macth - Documentação",
+      customSiteTitle: "Player Service - Documentação",
     }),
   );
   app.use(playerRoute);

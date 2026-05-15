@@ -50,6 +50,93 @@ export const create = async (player: {
   }
 };
 
+export const getAll = async (): Promise<[number, any]> => {
+  try {
+    logger.info("Fetching all player profiles");
+    const [status, players] = await playerRepository.getAll();
+    if (status !== 200) {
+      logger.warn("Repository returned an error during player listing", { statusCode: status });
+      throw new Error(players);
+    }
+    const result = players.map((p: any) => ({
+      email: p.email,
+      nickname: p.nickname,
+      rank: p.rank,
+      agenteFavorito: p.agenteFavorito,
+      regiao: p.regiao,
+    }));
+    logger.info("Player listing completed successfully", { totalPlayers: result.length });
+    return [200, result];
+  } catch (e) {
+    logger.error("Player listing failed", { error: String(e) });
+    return [500, String(e)];
+  }
+};
+
+export const updatePlayer = async (player: {
+  email: string;
+  rank?: number;
+  agenteFavorito?: number;
+  regiao?: string;
+  nickname?: string;
+}): Promise<[number, any]> => {
+  try {
+    logger.info("Starting player profile update flow", { email: player.email });
+    const allRanks = Object.values(Rank);
+    const allCharacters = Object.values(Character);
+
+    const updateData: { nickname?: string; rank?: string; agenteFavorito?: string; regiao?: string } = {};
+
+    if (player.rank !== undefined) {
+      if (player.rank < 0 || player.rank >= allRanks.length) {
+        logger.warn("Player update rejected -- invalid rank index", { rankIndex: player.rank });
+        throw new Error("Rank não existente");
+      }
+      updateData.rank = String(allRanks[player.rank]);
+    }
+
+    if (player.agenteFavorito !== undefined) {
+      if (player.agenteFavorito < 0 || player.agenteFavorito >= allCharacters.length) {
+        logger.warn("Player update rejected -- invalid agent index", { agentIndex: player.agenteFavorito });
+        throw new Error("Agente não existente");
+      }
+      updateData.agenteFavorito = String(allCharacters[player.agenteFavorito]);
+    }
+
+    if (player.regiao !== undefined) updateData.regiao = player.regiao;
+    if (player.nickname !== undefined) updateData.nickname = player.nickname;
+
+    logger.debug("Player update data resolved", updateData);
+
+    const [status, updated] = await playerRepository.updatePlayer(player.email, updateData);
+    if (status === 200) {
+      logger.info("Player profile updated successfully", { email: player.email });
+    } else {
+      logger.warn("Player update rejected by repository", { statusCode: status });
+    }
+    return [status, updated];
+  } catch (e) {
+    logger.error("Player profile update failed", { error: String(e) });
+    return [500, String(e)];
+  }
+};
+
+export const deletePlayer = async (email: string): Promise<[number, string]> => {
+  try {
+    logger.info("Starting player profile deletion flow", { email });
+    const [status, message] = await playerRepository.deletePlayer(email);
+    if (status === 200) {
+      logger.info("Player profile deleted successfully", { email });
+    } else {
+      logger.warn("Player deletion rejected by repository", { statusCode: status });
+    }
+    return [status, message];
+  } catch (e) {
+    logger.error("Player profile deletion failed", { error: String(e) });
+    return [500, String(e)];
+  }
+};
+
 export const login = async (email: string): Promise<[number, any]> => {
   try {
     logger.info("Fetching player profile for authentication context");

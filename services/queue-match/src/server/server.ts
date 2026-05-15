@@ -33,15 +33,31 @@ export const startServer = async () => {
     definition: {
       openapi: "3.0.0",
       info: {
-        title: "Queue Match",
+        title: "Queue Match Service",
         version: "1.0.0",
+        description:
+          "Serviço responsável pela formação automática de partidas no sistema Valorant MMR. " +
+          "Utiliza o MMR (Match Making Rating) de cada jogador para criar times equilibrados, " +
+          "com uma fila de espera persistida no Redis para ciclos com jogadores insuficientes. " +
+          "As partidas geradas são armazenadas no MongoDB.",
+        contact: {
+          name: "Suporte",
+          email: "diegohenriquemelo14@gmail.com",
+        },
       },
+      servers: [
+        {
+          url: `http://localhost:${process.env.QUEUE_PORT ?? 3004}`,
+          description: "Ambiente de desenvolvimento local",
+        },
+      ],
       components: {
         securitySchemes: {
           BearerAuth: {
             type: "http",
             scheme: "bearer",
             bearerFormat: "JWT",
+            description: "Token JWT obtido no Auth Service. Formato: `Bearer <token>`",
           },
         },
       },

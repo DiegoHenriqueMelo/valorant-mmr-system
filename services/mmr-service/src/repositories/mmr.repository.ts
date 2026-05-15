@@ -48,3 +48,65 @@ export const getAll = async (): Promise<[number, any]> => {
     logger.debug("MMR getAll operation finished");
   }
 };
+
+export const getByEmail = async (email: string): Promise<[number, any]> => {
+  try {
+    logger.info("Querying MMR record by email identifier", { email });
+    const record = await MMR.findOne({ email });
+    if (!record) {
+      logger.warn("No MMR record found for the provided email", { email });
+      return [404, "Registro de MMR não encontrado"];
+    }
+    logger.debug("MMR record retrieved successfully", { email });
+    return [200, record];
+  } catch (e) {
+    logger.error("Database query failed during MMR lookup by email", { error: String(e) });
+    return [500, String(e)];
+  } finally {
+    logger.debug("MMR getByEmail operation finished");
+  }
+};
+
+export const updateByEmail = async (
+  email: string,
+  historico: { kill: number; death: number; result: string; score: number }[],
+  mmr: number,
+): Promise<[number, string]> => {
+  try {
+    logger.info("Updating MMR record in the database", { email, mmrScore: mmr, matchCount: historico.length });
+    const updated = await MMR.findOneAndUpdate(
+      { email },
+      { $push: { historico: { $each: historico } }, mmr },
+      { new: true },
+    );
+    if (!updated) {
+      logger.warn("No MMR record found to update", { email });
+      return [404, "Registro de MMR não encontrado"];
+    }
+    logger.info("MMR record updated successfully", { email });
+    return [200, "MMR atualizado com sucesso"];
+  } catch (e) {
+    logger.error("Database write failed during MMR update", { error: String(e) });
+    return [500, String(e)];
+  } finally {
+    logger.debug("MMR update operation finished");
+  }
+};
+
+export const deleteByEmail = async (email: string): Promise<[number, string]> => {
+  try {
+    logger.info("Deleting MMR record from the database", { email });
+    const deleted = await MMR.findOneAndDelete({ email });
+    if (!deleted) {
+      logger.warn("No MMR record found to delete", { email });
+      return [404, "Registro de MMR não encontrado"];
+    }
+    logger.info("MMR record deleted successfully", { email });
+    return [200, "Registro de MMR removido com sucesso"];
+  } catch (e) {
+    logger.error("Database write failed during MMR deletion", { error: String(e) });
+    return [500, String(e)];
+  } finally {
+    logger.debug("MMR delete operation finished");
+  }
+};

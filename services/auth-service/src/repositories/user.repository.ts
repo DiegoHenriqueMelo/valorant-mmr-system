@@ -50,3 +50,53 @@ export const findByEmail = async (email: string): Promise<any> => {
     logger.debug("User lookup operation finished");
   }
 };
+
+export const findAll = async (): Promise<[number, any]> => {
+  try {
+    logger.info("Querying all user records from the database");
+    const users = await User.find({}, { passwordHash: 0 });
+    logger.debug("User records retrieved successfully", { count: users.length });
+    return [200, users];
+  } catch (e) {
+    logger.error("Database query failed during user listing", { error: String(e) });
+    return [500, String(e)];
+  } finally {
+    logger.debug("User findAll operation finished");
+  }
+};
+
+export const updatePassword = async (email: string, newHash: string): Promise<[number, string]> => {
+  try {
+    logger.info("Updating password hash for user", { email });
+    const updated = await User.findOneAndUpdate({ email }, { passwordHash: newHash });
+    if (!updated) {
+      logger.warn("No user found to update password", { email });
+      return [404, "Usuário não encontrado"];
+    }
+    logger.info("Password updated successfully", { email });
+    return [200, "Senha atualizada com sucesso"];
+  } catch (e) {
+    logger.error("Database write failed during password update", { error: String(e) });
+    return [500, String(e)];
+  } finally {
+    logger.debug("Password update operation finished");
+  }
+};
+
+export const deleteByEmail = async (email: string): Promise<[number, string]> => {
+  try {
+    logger.info("Deleting user record from the database", { email });
+    const deleted = await User.findOneAndDelete({ email });
+    if (!deleted) {
+      logger.warn("No user found to delete", { email });
+      return [404, "Usuário não encontrado"];
+    }
+    logger.info("User record deleted successfully", { email });
+    return [200, "Conta removida com sucesso"];
+  } catch (e) {
+    logger.error("Database write failed during user deletion", { error: String(e) });
+    return [500, String(e)];
+  } finally {
+    logger.debug("User delete operation finished");
+  }
+};

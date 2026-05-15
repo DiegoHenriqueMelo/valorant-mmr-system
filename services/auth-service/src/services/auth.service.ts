@@ -38,6 +38,97 @@ export const register = async (user: {
   }
 };
 
+export const getAll = async (): Promise<[number, any]> => {
+  try {
+    logger.info("Fetching all user accounts");
+    const [status, users] = await userRepository.findAll();
+    if (status !== 200) {
+      logger.warn("Repository returned an error during user listing", { statusCode: status });
+      throw new Error(users);
+    }
+    logger.info("User listing completed successfully", { count: users.length });
+    return [200, users];
+  } catch (e) {
+    logger.error("Failed to retrieve user list", { error: String(e) });
+    return [500, String(e)];
+  }
+};
+
+export const updatePassword = async (user: {
+  email: string;
+  currentPassword: string;
+  newPassword: string;
+}): Promise<[number, string]> => {
+  try {
+    logger.info("Starting password update flow", { email: user.email });
+    const BCRYPT_ROUNDS = 10;
+
+    const [status, getUser] = await userRepository.findByEmail(user.email);
+    if (status !== 200) {
+      logger.warn("Password update failed -- user not found", { statusCode: status });
+      throw new Error(getUser);
+    }
+
+    logger.debug("Validating current password before update");
+    const passIsValid = await bcrypt.compare(user.currentPassword, getUser.passwordHash);
+    if (!passIsValid) {
+      logger.warn("Password update rejected -- current password mismatch");
+      return [401, "Senha atual inválida"];
+    }
+
+    logger.debug("Hashing new password");
+    const newHash = bcrypt.hashSync(user.newPassword, BCRYPT_ROUNDS);
+    if (!newHash) {
+      logger.error("bcrypt returned a falsy value during password update");
+      throw new Error("Não foi possivel criptografar nova senha");
+    }
+
+    const [updateStatus, updateMessage] = await userRepository.updatePassword(user.email, newHash);
+    if (updateStatus === 200) {
+      logger.info("Password updated successfully", { email: user.email });
+    } else {
+      logger.warn("Password update rejected by repository", { statusCode: updateStatus });
+    }
+    return [updateStatus, updateMessage];
+  } catch (e) {
+    logger.error("Password update failed", { error: String(e) });
+    return [500, String(e)];
+  }
+};
+
+export const deleteAccount = async (user: {
+  email: string;
+  password: string;
+}): Promise<[number, string]> => {
+  try {
+    logger.info("Starting account deletion flow", { email: user.email });
+
+    const [status, getUser] = await userRepository.findByEmail(user.email);
+    if (status !== 200) {
+      logger.warn("Account deletion failed -- user not found", { statusCode: status });
+      throw new Error(getUser);
+    }
+
+    logger.debug("Validating password before account deletion");
+    const passIsValid = await bcrypt.compare(user.password, getUser.passwordHash);
+    if (!passIsValid) {
+      logger.warn("Account deletion rejected -- password mismatch");
+      return [401, "Credenciais inválidas"];
+    }
+
+    const [deleteStatus, deleteMessage] = await userRepository.deleteByEmail(user.email);
+    if (deleteStatus === 200) {
+      logger.info("Account deleted successfully", { email: user.email });
+    } else {
+      logger.warn("Account deletion rejected by repository", { statusCode: deleteStatus });
+    }
+    return [deleteStatus, deleteMessage];
+  } catch (e) {
+    logger.error("Account deletion failed", { error: String(e) });
+    return [500, String(e)];
+  }
+};
+
 export const login = async (user: {
   email: string;
   password: string;

@@ -29,18 +29,34 @@ export const startServer = async () => {
     definition: {
       openapi: "3.0.0",
       info: {
-        title: "Vava Match",
+        title: "Auth Service",
         version: "1.0.0",
+        description:
+          "Serviço de autenticação do sistema Valorant MMR. " +
+          "Responsável pelo cadastro de usuários e geração de tokens JWT utilizados " +
+          "para autenticar requisições nos demais serviços (Player Service, MMR Service). " +
+          "As senhas são armazenadas com hash bcrypt (10 rounds) — nunca em texto puro.",
+        contact: {
+          name: "Suporte",
+          email: "diegohenriquemelo14@gmail.com",
+        },
       },
+      servers: [
+        {
+          url: `http://localhost:${process.env.AUTH_PORT ?? 3001}`,
+          description: "Ambiente de desenvolvimento local",
+        },
+      ],
     },
     apis: ["./src/routes/**/*.ts", "./routes/**/*.ts"],
   });
+  app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
   app.use(
     "/api-docs",
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
       customCss: ".swagger-ui .topbar { display: none }",
-      customSiteTitle: "Vava Macth - Documentação",
+      customSiteTitle: "Auth Service - Documentação",
     }),
   );
   app.use(authRoute);
