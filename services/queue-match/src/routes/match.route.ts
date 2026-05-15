@@ -242,7 +242,8 @@ matchRoute.get(
   "/api/match/:id",
   loggerEndpoint,
   async (req: Request, res: Response) => {
-    const result = await matchController.getById(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const result = await matchController.getById(id);
     res.status(result[0]).json({ statusCode: result[0], match: result[1] });
   },
 );
@@ -302,7 +303,8 @@ matchRoute.delete(
   "/api/match/:id",
   loggerEndpoint,
   async (req: Request, res: Response) => {
-    const result = await matchController.deleteById(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const result = await matchController.deleteById(id);
     res.status(result[0]).json({ statusCode: result[0], message: result[1] });
   },
 );

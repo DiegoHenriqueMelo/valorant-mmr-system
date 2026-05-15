@@ -8,7 +8,7 @@ const logger = createLogger("database");
 export const connectMongo = async (): Promise<string> => {
   try {
     logger.info("Connecting to MongoDB...");
-    const uri: string = String(process.env.QUEUE_MONGO_URI);
+    const uri: string = String(process.env.MATCH_MONGO_URI);
     const result = await mongoose.connect(uri);
     const conn = result.connections[0];
     logger.info(`MongoDB connected -- host: ${conn.host}, port: ${conn.port}, db: ${conn.name}`);

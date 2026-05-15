@@ -3,9 +3,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 type LogMeta = Record<string, unknown>;
+type SectionFields = Record<string, string | number>;
 
 export const createLogger = (context?: string) => {
   const contextLabel = context ? `[${context}]` : "[app]";
+  const BOX_WIDTH = 54;
 
   const buildFormat = (colorize: boolean) => {
     const transforms = [
@@ -37,10 +39,35 @@ export const createLogger = (context?: string) => {
     ],
   });
 
+  const buildSection = (title: string, fields?: SectionFields): string => {
+    const innerWidth = BOX_WIDTH + 4;
+    const bar = "═".repeat(innerWidth);
+    const row = (text: string) => `  ║  ${text.padEnd(BOX_WIDTH)}  ║`;
+
+    const lines: string[] = [
+      `  ╔${bar}╗`,
+      row(""),
+      row(title),
+      row(""),
+    ];
+
+    if (fields && Object.keys(fields).length > 0) {
+      lines.push(`  ╠${bar}╣`);
+      for (const [key, value] of Object.entries(fields)) {
+        lines.push(row(`${key.padEnd(30)}: ${value}`));
+      }
+    }
+
+    lines.push(`  ╚${bar}╝`);
+    return "\n" + lines.join("\n");
+  };
+
   return {
-    info:  (message: string, meta?: LogMeta) => winstonInstance.info(message, meta),
-    error: (message: string, meta?: LogMeta) => winstonInstance.error(message, meta),
-    warn:  (message: string, meta?: LogMeta) => winstonInstance.warn(message, meta),
-    debug: (message: string, meta?: LogMeta) => winstonInstance.debug(message, meta),
+    info:    (message: string, meta?: LogMeta) => winstonInstance.info(message, meta),
+    error:   (message: string, meta?: LogMeta) => winstonInstance.error(message, meta),
+    warn:    (message: string, meta?: LogMeta) => winstonInstance.warn(message, meta),
+    debug:   (message: string, meta?: LogMeta) => winstonInstance.debug(message, meta),
+    section: (title: string, fields?: SectionFields) =>
+      winstonInstance.info(buildSection(title, fields)),
   };
 };
