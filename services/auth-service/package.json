@@ -4,7 +4,9 @@
   "description": "Serviço de autenticação e criação do usuario no sistema",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec tsx src/app.ts"
+    "dev": "nodemon --exec tsx src/app.ts",
+    "start": "node dist/server.js",
+    "build": "tsc"
   },
   "author": "Diego Melo",
   "license": "ISC",

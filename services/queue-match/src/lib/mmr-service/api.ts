@@ -8,7 +8,7 @@ export const getMMR = async (): Promise<
 > => {
   dotenv.config();
 
-  const url = `http://localhost:${process.env.MMR_PORT}/api/mmr`;
+  const url = `http://${process.env.MMR_HOST ?? "localhost"}:${process.env.MMR_PORT}/api/mmr`;
 
   logger.debug("Requesting MMR data from mmr-service", { endpoint: url });
 

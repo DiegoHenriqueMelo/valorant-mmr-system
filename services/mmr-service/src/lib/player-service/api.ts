@@ -6,7 +6,7 @@ const logger = createLogger("player-service.client");
 export const getRank = async (token: string): Promise<number> => {
   dotenv.config();
 
-  const url = `http://localhost:${process.env.PLAYER_PORT}/api/player/me`;
+  const url = `http://${process.env.PLAYER_HOST ?? "localhost"}:${process.env.PLAYER_PORT}/api/player/me`;
 
   logger.debug("Requesting player rank from player-service", { endpoint: url });
 

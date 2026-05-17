@@ -121,8 +121,8 @@ export const getAll = async (): Promise<[number, any]> => {
       throw new Error(getUser);
     }
 
-    const result = [];
-    getUser.forEach((player) => {
+    const result: { email: string; mmr: number }[] = [];
+    getUser.forEach((player: { email: string; mmr: number }) => {
       result.push({ email: player.email, mmr: player.mmr });
     });
 
