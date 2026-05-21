@@ -2,6 +2,11 @@ import { Router, Request, Response } from "express";
 import { loggerEndpoint } from "../middlewares/loggerEndpoint.js";
 import * as authController from "../controllers/auth.controller.js";
 import { tokenIsValid } from "../middlewares/auth.middleware.js";
+import client from "prom-client";
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+collectDefaultMetrics();
 
 export const authRoute: Router = Router();
 
@@ -436,3 +441,8 @@ authRoute.post(
     res.status(result[0]).json({ statusCode: result[0], token: result[1] });
   },
 );
+
+authRoute.get("/api/metrics", async (req: Request, res: Response) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});

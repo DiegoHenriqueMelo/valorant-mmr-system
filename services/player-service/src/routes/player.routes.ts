@@ -2,8 +2,13 @@ import { Router, Request, Response } from "express";
 import { loggerEndpoint } from "../middlewares/loggerEndpoint.js";
 import * as playerController from "../controllers/player.controller.js";
 import { tokenIsValid } from "../middlewares/auhtToken.js";
+import client from "prom-client";
 
 export const playerRoute: Router = Router();
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+collectDefaultMetrics();
 
 /**
  * @openapi
@@ -488,3 +493,8 @@ playerRoute.get(
     res.status(result[0]).json({ statusCode: result[0], player: result[1] });
   },
 );
+
+playerRoute.get("/api/metrics", async (_req: Request, res: Response) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});

@@ -2,8 +2,13 @@ import { Router, Request, Response } from "express";
 import { loggerEndpoint } from "../middlewares/loggerEndpoint.js";
 import * as mmrController from "../controllers/mmr.controller.js";
 import { tokenIsValid } from "../middlewares/auth.middleware.js";
+import client from "prom-client";
 
 export const mmrRoute: Router = Router();
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+collectDefaultMetrics();
 
 /**
  * @openapi
@@ -485,3 +490,8 @@ mmrRoute.delete(
     res.status(result[0]).json({ statusCode: result[0], message: result[1] });
   },
 );
+
+mmrRoute.get("/api/metrics", async (_req: Request, res: Response) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});

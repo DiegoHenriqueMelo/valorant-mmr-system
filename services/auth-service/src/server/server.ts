@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
+import path from "path";
 import { authRoute } from "../routes/auth.routes.js";
 import { connectMongo } from "../config/database.js";
 import { createLogger } from "../utils/logger.js";
@@ -48,7 +49,12 @@ export const startServer = async () => {
         },
       ],
     },
-    apis: ["./src/routes/**/*.ts", "./routes/**/*.ts"],
+    apis: [
+      path.join(__dirname, "../routes/**/*.ts"),
+      path.join(__dirname, "../routes/**/*.js"),
+      path.join(process.cwd(), "src/routes/**/*.ts"),
+      path.join(process.cwd(), "dist/routes/**/*.js"),
+    ],
   });
   app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
   app.use(

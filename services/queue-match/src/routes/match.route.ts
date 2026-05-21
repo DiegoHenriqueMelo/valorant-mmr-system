@@ -1,8 +1,13 @@
 import { Router, Request, Response } from "express";
 import { loggerEndpoint } from "../middlewares/loggerEndpoint.js";
 import * as matchController from "../controllers/match.controller.js";
+import client from "prom-client";
 
 export const matchRoute: Router = Router();
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+collectDefaultMetrics();
 
 /**
  * @openapi
@@ -308,4 +313,9 @@ matchRoute.delete(
     res.status(result[0]).json({ statusCode: result[0], message: result[1] });
   },
 );
+
+matchRoute.get("/api/metrics", async (_req: Request, res: Response) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});
 

@@ -154,6 +154,22 @@ services:
     networks:
       - valorant-network
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - valorant-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3005:3000"
+    networks:
+      - valorant-network
+
 networks:
   valorant-network:
     driver: bridge
