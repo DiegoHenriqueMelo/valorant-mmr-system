@@ -1,0 +1,120 @@
+config:
+  target: "http://localhost:3002"
+  processor: "./helpers.js"
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  phases:
+    - name: "Smoke"
+      duration: 30
+      arrivalRate: 1
+    - name: "Warmup"
+      duration: 60
+      arrivalRate: 1
+      rampTo: 10
+    - name: "Load"
+      duration: 180
+      arrivalRate: 10
+    - name: "Rampdown"
+      duration: 30
+      arrivalRate: 1
+  http:
+    timeout: 10000
+
+scenarios:
+  - name: "Player - Fluxo Completo"
+    weight: 1
+    flow:
+      - function: "generateAuthUser"
+      - function: "generatePlayerData"
+
+      # Setup: Registrar no auth-service (URL absoluta)
+      - post:
+          url: "http://localhost:3001/api/auth"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 201
+
+      # Setup: Login e captura do token
+      - post:
+          url: "http://localhost:3001/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+          expect:
+            - statusCode: 200
+
+      - think: 0.2
+
+      # 1. Criar perfil de jogador
+      - post:
+          url: "/api/player"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            nickname: "{{ nickname }}"
+            rank: "{{ rank }}"
+            agenteFavorito: "{{ agenteFavorito }}"
+            regiao: "{{ regiao }}"
+          expect:
+            - statusCode: 201
+
+      - think: 0.3
+
+      # 2. Listar todos os jogadores (público)
+      - get:
+          url: "/api/player"
+          expect:
+            - statusCode: 200
+            - hasProperty: "players"
+
+      - think: 0.3
+
+      # 3. Buscar meu perfil
+      - get:
+          url: "/api/player/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "player"
+
+      - think: 0.3
+
+      # 4. Atualizar perfil
+      - put:
+          url: "/api/player/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            rank: 20
+            agenteFavorito: 11
+          expect:
+            - statusCode: 200
+
+      - think: 0.3
+
+      # Cleanup: Deletar jogador
+      - delete:
+          url: "/api/player/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+
+      # Cleanup: Deletar conta
+      - delete:
+          url: "http://localhost:3001/api/auth"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            password: "{{ password }}"
+
+      - think: 1

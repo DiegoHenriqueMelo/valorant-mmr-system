@@ -1,0 +1,93 @@
+config:
+  target: "http://localhost:3001"
+  processor: "./helpers.js"
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  # Fases: smoke → warmup → load → rampdown
+  # Para rodar só smoke: artillery run --overrides '{"config":{"phases":[{"duration":30,"arrivalRate":1}]}}' auth-service.yml
+  phases:
+    - name: "Smoke (1 req/s - 30s)"
+      duration: 30
+      arrivalRate: 1
+    - name: "Warmup (ramp 1→10 req/s - 60s)"
+      duration: 60
+      arrivalRate: 1
+      rampTo: 10
+    - name: "Load (10 req/s - 3min)"
+      duration: 180
+      arrivalRate: 10
+    - name: "Rampdown"
+      duration: 30
+      arrivalRate: 1
+  http:
+    timeout: 10000
+
+scenarios:
+  - name: "Auth - Fluxo Completo (Register → Login → List → Update Password → Delete)"
+    weight: 1
+    flow:
+      - function: "generateAuthUser"
+
+      # 1. Registrar
+      - post:
+          url: "/api/auth"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 201
+            - hasProperty: "statusCode"
+
+      # 2. Login e captura do JWT
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+          expect:
+            - statusCode: 200
+            - hasProperty: "token"
+
+      - think: 0.3
+
+      # 3. Listar usuários (autenticado)
+      - get:
+          url: "/api/auth"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "users"
+
+      - think: 0.3
+
+      # 4. Atualizar senha
+      - put:
+          url: "/api/auth/password"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            currentPassword: "{{ password }}"
+            newPassword: "{{ newPassword }}"
+          expect:
+            - statusCode: 200
+
+      - think: 0.3
+
+      # 5. Deletar conta (limpeza)
+      - delete:
+          url: "/api/auth"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            password: "{{ newPassword }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1

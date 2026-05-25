@@ -1,0 +1,67 @@
+config:
+  target: "http://localhost:3004"
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  phases:
+    - name: "Smoke"
+      duration: 30
+      arrivalRate: 1
+    - name: "Warmup"
+      duration: 60
+      arrivalRate: 1
+      rampTo: 10
+    - name: "Load"
+      duration: 180
+      arrivalRate: 10
+    - name: "Rampdown"
+      duration: 30
+      arrivalRate: 1
+  http:
+    timeout: 15000
+
+scenarios:
+  # Cenário 1: Consulta de partidas (público, alta frequência)
+  - name: "Queue - Leitura de Partidas"
+    weight: 3
+    flow:
+      # Listar todas as partidas
+      - get:
+          url: "/api/match/all"
+          expect:
+            - statusCode: 200
+            - hasProperty: "matches"
+          capture:
+            - json: "$.matches[0]._id"
+              as: "matchId"
+
+      - think: 0.5
+
+      # Buscar partida por ID (se existir)
+      - get:
+          url: "/api/match/{{ matchId }}"
+          ifTrue: "matchId"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+  # Cenário 2: Ciclo de matchmaking (menor frequência — endpoint pesado)
+  - name: "Queue - Ciclo de Matchmaking"
+    weight: 1
+    flow:
+      # Executar matchmaking (201 = partida criada; 202 = jogadores insuficientes)
+      - get:
+          url: "/api/match"
+
+      - think: 0.5
+
+      # Verificar resultado
+      - get:
+          url: "/api/match/all"
+          expect:
+            - statusCode: 200
+
+      - think: 2
