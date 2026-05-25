@@ -84,6 +84,7 @@ services:
       - AUTH_PORT=3001
       - AUTH_MONGO_URI=mongodb://mongo-auth:27017/auth_db
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     depends_on:
       mongo-auth:
         condition: service_healthy
@@ -101,6 +102,7 @@ services:
       - PLAYER_PORT=3002
       - PLAYER_MONGO_URI=mongodb://mongo-player:27017/player_db
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     depends_on:
       mongo-player:
         condition: service_healthy
@@ -118,6 +120,7 @@ services:
       - MMR_PORT=3003
       - MMR_MONGO_URI=mongodb://mongo-mmr:27017/mmr_db
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - PLAYER_HOST=player-service
       - PLAYER_PORT=3002
     depends_on:
@@ -139,6 +142,7 @@ services:
       - MMR_MATCH=3004
       - MATCH_MONGO_URI=mongodb://mongo-match:27017/match_db
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASS=${REDIS_PASS}
