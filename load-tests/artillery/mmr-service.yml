@@ -1,0 +1,147 @@
+config:
+  target: "http://localhost:3003"
+  processor: "./helpers.js"
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  phases:
+    - name: "Smoke"
+      duration: 30
+      arrivalRate: 1
+    - name: "Warmup"
+      duration: 60
+      arrivalRate: 1
+      rampTo: 8
+    - name: "Load"
+      duration: 180
+      arrivalRate: 8
+    - name: "Rampdown"
+      duration: 30
+      arrivalRate: 1
+  http:
+    timeout: 15000
+
+scenarios:
+  - name: "MMR - Fluxo Completo"
+    weight: 1
+    flow:
+      - function: "generateAuthUser"
+      - function: "generatePlayerData"
+      - function: "generateMatchData"
+
+      # Setup: Registrar usuário
+      - post:
+          url: "http://localhost:3001/api/auth"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 201
+
+      # Setup: Login
+      - post:
+          url: "http://localhost:3001/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+          expect:
+            - statusCode: 200
+
+      # Setup: Criar perfil de jogador (obrigatório antes de registrar MMR)
+      - post:
+          url: "http://localhost:3002/api/player"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            nickname: "{{ nickname }}"
+            rank: "{{ rank }}"
+            agenteFavorito: "{{ agenteFavorito }}"
+            regiao: "{{ regiao }}"
+          expect:
+            - statusCode: 201
+
+      - think: 0.3
+
+      # 1. Registrar MMR com histórico de 3 partidas
+      - post:
+          url: "/api/mmr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            historico:
+              - kill: "{{ kill1 }}"
+                death: "{{ death1 }}"
+                result: "{{ result1 }}"
+              - kill: "{{ kill2 }}"
+                death: "{{ death2 }}"
+                result: "{{ result2 }}"
+              - kill: "{{ kill3 }}"
+                death: "{{ death3 }}"
+                result: "{{ result3 }}"
+          expect:
+            - statusCode: 201
+
+      - think: 0.3
+
+      # 2. Consultar leaderboard (público)
+      - get:
+          url: "/api/mmr"
+          expect:
+            - statusCode: 200
+            - hasProperty: "mmrs"
+
+      - think: 0.3
+
+      # 3. Buscar meu MMR
+      - get:
+          url: "/api/mmr/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "mmr"
+
+      - think: 0.3
+
+      # 4. Adicionar mais partidas
+      - put:
+          url: "/api/mmr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            historico:
+              - kill: "{{ kill1 }}"
+                death: "{{ death2 }}"
+                result: "{{ result2 }}"
+          expect:
+            - statusCode: 200
+
+      - think: 0.3
+
+      # Cleanup: Deletar MMR
+      - delete:
+          url: "/api/mmr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+
+      # Cleanup: Deletar jogador e conta
+      - delete:
+          url: "http://localhost:3002/api/player/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+      - delete:
+          url: "http://localhost:3001/api/auth"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            password: "{{ password }}"
+
+      - think: 1

@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "valorant-mmr-system"
+    metrics_path: /api/metrics
+    static_configs:
+      - targets:
+          - "auth-service:3001"
+          - "player-service:3002"
+          - "mmr-service:3003"
+          - "queue-match:3004"

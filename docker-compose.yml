@@ -1,0 +1,185 @@
+services:
+  mongo-auth:
+    image: mongo:7
+    container_name: mongo-auth
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-auth-data:/data/db
+    networks:
+      - valorant-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-player:
+    image: mongo:7
+    container_name: mongo-player
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo-player-data:/data/db
+    networks:
+      - valorant-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-mmr:
+    image: mongo:7
+    container_name: mongo-mmr
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongo-mmr-data:/data/db
+    networks:
+      - valorant-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-match:
+    image: mongo:7
+    container_name: mongo-match
+    ports:
+      - "27021:27017"
+    volumes:
+      - mongo-match-data:/data/db
+    networks:
+      - valorant-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --requirepass ${REDIS_PASS}
+    ports:
+      - "6379:6379"
+    networks:
+      - valorant-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+      - NODE_ENV=${NODE_ENV}
+      - AUTH_PORT=3001
+      - AUTH_MONGO_URI=mongodb://mongo-auth:27017/auth_db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    depends_on:
+      mongo-auth:
+        condition: service_healthy
+    networks:
+      - valorant-network
+
+  player-service:
+    build: ./services/player-service
+    container_name: player-service
+    ports:
+      - "3002:3002"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+      - NODE_ENV=${NODE_ENV}
+      - PLAYER_PORT=3002
+      - PLAYER_MONGO_URI=mongodb://mongo-player:27017/player_db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    depends_on:
+      mongo-player:
+        condition: service_healthy
+    networks:
+      - valorant-network
+
+  mmr-service:
+    build: ./services/mmr-service
+    container_name: mmr-service
+    ports:
+      - "3003:3003"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+      - NODE_ENV=${NODE_ENV}
+      - MMR_PORT=3003
+      - MMR_MONGO_URI=mongodb://mongo-mmr:27017/mmr_db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - PLAYER_HOST=player-service
+      - PLAYER_PORT=3002
+    depends_on:
+      mongo-mmr:
+        condition: service_healthy
+      player-service:
+        condition: service_started
+    networks:
+      - valorant-network
+
+  queue-match:
+    build: ./services/queue-match
+    container_name: queue-match
+    ports:
+      - "3004:3004"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+      - NODE_ENV=${NODE_ENV}
+      - MMR_MATCH=3004
+      - MATCH_MONGO_URI=mongodb://mongo-match:27017/match_db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS}
+      - MMR_HOST=mmr-service
+      - MMR_PORT=3003
+    depends_on:
+      mongo-match:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mmr-service:
+        condition: service_started
+    networks:
+      - valorant-network
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - valorant-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3005:3000"
+    networks:
+      - valorant-network
+
+networks:
+  valorant-network:
+    driver: bridge
+
+volumes:
+  mongo-auth-data:
+  mongo-player-data:
+  mongo-mmr-data:
+  mongo-match-data:

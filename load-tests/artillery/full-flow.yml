@@ -1,0 +1,155 @@
+config:
+  # target é sobrescrito por URLs absolutas em cada request
+  target: "http://localhost:3001"
+  processor: "./helpers.js"
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  phases:
+    - name: "Smoke (1 usuário - 1min)"
+      duration: 60
+      arrivalRate: 1
+    - name: "Warmup (ramp 1→5 req/s - 2min)"
+      duration: 120
+      arrivalRate: 1
+      rampTo: 5
+    - name: "Load (5 req/s - 5min)"
+      duration: 300
+      arrivalRate: 5
+    - name: "Stress (ramp 5→15 req/s - 3min)"
+      duration: 180
+      arrivalRate: 5
+      rampTo: 15
+    - name: "Rampdown"
+      duration: 60
+      arrivalRate: 1
+  http:
+    timeout: 20000
+
+scenarios:
+  - name: "Full Flow — Jornada Completa do Jogador"
+    weight: 1
+    flow:
+      - function: "generateAuthUser"
+      - function: "generatePlayerData"
+      - function: "generateMatchData"
+
+      # ── ETAPA 1: Cadastro ────────────────────────────────────────────────────
+      - post:
+          url: "http://localhost:3001/api/auth"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 201
+
+      # ── ETAPA 2: Login ───────────────────────────────────────────────────────
+      - post:
+          url: "http://localhost:3001/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+          expect:
+            - statusCode: 200
+            - hasProperty: "token"
+
+      - think: 0.2
+
+      # ── ETAPA 3: Criar perfil de jogador ─────────────────────────────────────
+      - post:
+          url: "http://localhost:3002/api/player"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            nickname: "{{ nickname }}"
+            rank: "{{ rank }}"
+            agenteFavorito: "{{ agenteFavorito }}"
+            regiao: "{{ regiao }}"
+          expect:
+            - statusCode: 201
+
+      - think: 0.2
+
+      # ── ETAPA 4: Registrar MMR ────────────────────────────────────────────────
+      - post:
+          url: "http://localhost:3003/api/mmr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            historico:
+              - kill: "{{ kill1 }}"
+                death: "{{ death1 }}"
+                result: "{{ result1 }}"
+              - kill: "{{ kill2 }}"
+                death: "{{ death2 }}"
+                result: "{{ result2 }}"
+              - kill: "{{ kill3 }}"
+                death: "{{ death3 }}"
+                result: "{{ result3 }}"
+          expect:
+            - statusCode: 201
+
+      - think: 0.2
+
+      # ── ETAPA 5: Consultar leaderboard ───────────────────────────────────────
+      - get:
+          url: "http://localhost:3003/api/mmr"
+          expect:
+            - statusCode: 200
+
+      - think: 0.2
+
+      # ── ETAPA 6: Adicionar novas partidas ─────────────────────────────────────
+      - put:
+          url: "http://localhost:3003/api/mmr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            historico:
+              - kill: "{{ kill2 }}"
+                death: "{{ death3 }}"
+                result: "{{ result1 }}"
+          expect:
+            - statusCode: 200
+
+      - think: 0.2
+
+      # ── ETAPA 7: Trigger matchmaking ──────────────────────────────────────────
+      # 201 = partida criada | 202 = jogadores insuficientes (ambos são válidos)
+      - get:
+          url: "http://localhost:3004/api/match"
+
+      - think: 0.2
+
+      # ── ETAPA 8: Listar partidas ──────────────────────────────────────────────
+      - get:
+          url: "http://localhost:3004/api/match/all"
+          expect:
+            - statusCode: 200
+
+      - think: 0.2
+
+      # ── ETAPA 9: Limpeza ──────────────────────────────────────────────────────
+      - delete:
+          url: "http://localhost:3003/api/mmr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+      - delete:
+          url: "http://localhost:3002/api/player/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+      - delete:
+          url: "http://localhost:3001/api/auth"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            password: "{{ password }}"
+
+      - think: 1
